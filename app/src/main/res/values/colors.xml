@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- App Theme Colors -->
+    <color name="primary_color">#FF1976D2</color>
+    <color name="primary_dark_color">#FF1565C0</color>
+    <color name="accent_color">#FFFF5722</color>
+    
+    <!-- Background Colors -->
+    <color name="background_color">#FFF5F5F5</color>
+    <color name="card_background">#FFFFFFFF</color>
+    <color name="surface_color">#FFFFFFFF</color>
+    
+    <!-- Text Colors -->
+    <color name="primary_text_color">#FF212121</color>
+    <color name="secondary_text_color">#FF757575</color>
+    <color name="hint_text_color">#FFBDBDBD</color>
+    
+    <!-- Status Colors -->
+    <color name="success_color">#FF4CAF50</color>
+    <color name="error_color">#FFF44336</color>
+    <color name="warning_color">#FFFF9800</color>
+    <color name="info_color">#FF2196F3</color>
+    
+    <!-- File Type Colors -->
+    <color name="pdf_color">#FFE53E3E</color>
+    <color name="docx_color">#FF2196F3</color>
+    <color name="any_to_pdf_color">#FF9C27B0</color>
+    
+    <!-- Material Design Colors -->
+    <color name="material_blue">#FF2196F3</color>
+    <color name="material_green">#FF4CAF50</color>
+    <color name="material_orange">#FFFF9800</color>
+    <color name="material_red">#FFF44336</color>
+    <color name="material_purple">#FF9C27B0</color>
+    <color name="material_teal">#FF009688</color>
+    <color name="material_indigo">#FF3F51B5</color>
+    <color name="material_pink">#FFE91E63</color>
+    <color name="material_deep_purple">#FF673AB7</color>
+    <color name="material_light_blue">#FF03A9F4</color>
+    <color name="material_light_green">#FF8BC34A</color>
+    <color name="material_lime">#FFCDDC39</color>
+    <color name="material_yellow">#FFFFEB3B</color>
+    <color name="material_amber">#FFFFC107</color>
+    <color name="material_deep_orange">#FFFF5722</color>
+    <color name="material_brown">#FF795548</color>
+    <color name="material_grey">#FF9E9E9E</color>
+    <color name="material_blue_grey">#FF607D8B</color>
+</resources>
