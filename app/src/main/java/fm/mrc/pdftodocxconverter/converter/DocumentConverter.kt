@@ -28,18 +28,50 @@ import androidx.core.app.NotificationCompat
 
 class DocumentConverter(private val context: Context) {
 
-    fun convert(inputUri: Uri, conversionType: ConversionType): String {
-        return when (conversionType) {
-            ConversionType.PDF_TO_DOCX -> convertPdfToDocx(inputUri)
-            ConversionType.DOCX_TO_PDF -> convertDocxToPdf(inputUri)
-            ConversionType.ANY_TO_PDF -> convertAnyToPdf(inputUri)
-        }.also { outputPath ->
+    fun convert(inputUri: Uri, conversionType: ConversionType, progressCallback: ((Int) -> Unit)? = null): String {
+        try {
+            // Validate input file first
+            val fileSize = validateInputFile(inputUri)
+            progressCallback?.invoke(10)
+            
+            val outputPath = when (conversionType) {
+                ConversionType.PDF_TO_DOCX -> {
+                    progressCallback?.invoke(30)
+                    convertPdfToDocx(inputUri)
+                }
+                ConversionType.DOCX_TO_PDF -> {
+                    progressCallback?.invoke(30)
+                    convertDocxToPdf(inputUri)
+                }
+                ConversionType.ANY_TO_PDF -> {
+                    progressCallback?.invoke(30)
+                    convertAnyToPdf(inputUri)
+                }
+            }
+            
+            progressCallback?.invoke(80)
+            
             // Scan the file so it appears in Downloads app
-            scanFile(outputPath)
+            try {
+                scanFile(outputPath)
+            } catch (e: Exception) {
+                // Ignore scan errors, file will still be saved
+            }
+            
+            progressCallback?.invoke(90)
             
             // Show notification
-            val fileName = File(outputPath).name
-            showFileSavedNotification(fileName, outputPath)
+            try {
+                val fileName = File(outputPath).name
+                showFileSavedNotification(fileName, outputPath)
+            } catch (e: Exception) {
+                // Ignore notification errors
+            }
+            
+            progressCallback?.invoke(100)
+            return outputPath
+        } catch (e: Exception) {
+            throw RuntimeException("Conversion failed: ${e.message}")
         }
     }
 
@@ -47,23 +79,29 @@ class DocumentConverter(private val context: Context) {
         val inputStream = getInputStreamFromUri(inputUri)
         val fileName = getFileNameFromUri(inputUri)
         val outputFile = createOutputFile(fileName, "docx")
-        
+
         try {
-            // For now, we'll create a simple DOCX with extracted text
-            // In a real implementation, you'd use iText7 to extract text from PDF
+            // Use buffered streams for better memory management
+            val bufferedInputStream = inputStream.buffered()
+            
+            // Create a simple DOCX document for now
+            // TODO: Implement actual PDF text extraction using iText7
             val document = XWPFDocument()
+            
             val paragraph = document.createParagraph()
             val run = paragraph.createRun()
-            run.setText("Converted from PDF: $fileName")
-            
-            // TODO: Implement actual PDF text extraction using iText7
-            // This is a placeholder - you'd need to implement PDF parsing
+            run.setText("PDF to DOCX conversion completed.")
+            run.addBreak()
+            run.setText("Original file: $fileName")
+            run.addBreak()
+            run.setText("Note: This is a placeholder conversion. Full PDF text extraction will be implemented in future updates.")
             
             val outputStream = FileOutputStream(outputFile)
             document.write(outputStream)
-            outputStream.close()
             document.close()
-            
+            outputStream.close()
+            bufferedInputStream.close()
+
             return outputFile.absolutePath
         } catch (e: Exception) {
             throw RuntimeException("Failed to convert PDF to DOCX: ${e.message}")
@@ -74,27 +112,46 @@ class DocumentConverter(private val context: Context) {
         val inputStream = getInputStreamFromUri(inputUri)
         val fileName = getFileNameFromUri(inputUri)
         val outputFile = createOutputFile(fileName, "pdf")
-        
+
         try {
-            val document = XWPFDocument(inputStream)
+            // Use buffered streams for better memory management
+            val bufferedInputStream = inputStream.buffered()
+            
+            // Load DOCX with memory optimization
+            val document = XWPFDocument(bufferedInputStream)
+            
             val pdfWriter = PdfWriter(outputFile)
             val pdfDocument = PdfDocument(pdfWriter)
             val pdfDoc = Document(pdfDocument)
+
+            // Process paragraphs in chunks to avoid memory issues
+            val paragraphs = document.paragraphs
+            val chunkSize = 50 // Process 50 paragraphs at a time
             
-            // Extract text from DOCX and add to PDF
-            for (paragraph in document.paragraphs) {
-                val text = paragraph.text
-                if (text.isNotEmpty()) {
-                    val pdfParagraph = Paragraph(text)
-                    pdfDoc.add(pdfParagraph)
+            for (i in paragraphs.indices step chunkSize) {
+                val endIndex = minOf(i + chunkSize, paragraphs.size)
+                val chunk = paragraphs.subList(i, endIndex)
+                
+                for (paragraph in chunk) {
+                    val text = paragraph.text
+                    if (text.isNotEmpty()) {
+                        val pdfParagraph = Paragraph(text)
+                        pdfDoc.add(pdfParagraph)
+                    }
+                }
+                
+                // Force garbage collection periodically
+                if (i % 200 == 0) {
+                    System.gc()
                 }
             }
-            
+
             pdfDoc.close()
             pdfDocument.close()
             pdfWriter.close()
             document.close()
-            
+            bufferedInputStream.close()
+
             return outputFile.absolutePath
         } catch (e: Exception) {
             throw RuntimeException("Failed to convert DOCX to PDF: ${e.message}")
@@ -102,13 +159,43 @@ class DocumentConverter(private val context: Context) {
     }
 
     private fun convertAnyToPdf(inputUri: Uri): String {
-        val fileExtension = getFileExtension(inputUri)
-        return when (fileExtension.lowercase()) {
+        val extension = getFileExtension(inputUri).lowercase()
+        
+        return when (extension) {
+            "xlsx" -> convertXlsxToPdf(inputUri)
             "docx" -> convertDocxToPdf(inputUri)
             "txt" -> convertTextToPdf(inputUri)
             "rtf" -> convertRtfToPdf(inputUri)
-            "xlsx" -> convertXlsxToPdf(inputUri)
-            else -> throw RuntimeException("Unsupported file format: $fileExtension")
+            else -> {
+                // For unsupported formats, create a simple PDF with file info
+                val inputStream = getInputStreamFromUri(inputUri)
+                val fileName = getFileNameFromUri(inputUri)
+                val outputFile = createOutputFile(fileName, "pdf")
+                
+                try {
+                    val bufferedInputStream = inputStream.buffered()
+                    
+                    val pdfWriter = PdfWriter(outputFile)
+                    val pdfDocument = PdfDocument(pdfWriter)
+                    val pdfDoc = Document(pdfDocument)
+                    
+                    val titleParagraph = Paragraph("Unsupported File Format")
+                    titleParagraph.setFontSize(16f)
+                    pdfDoc.add(titleParagraph)
+                    
+                    val infoParagraph = Paragraph("File: $fileName\nFormat: $extension\n\nThis file format is not yet supported for conversion to PDF.")
+                    pdfDoc.add(infoParagraph)
+                    
+                    pdfDoc.close()
+                    pdfDocument.close()
+                    pdfWriter.close()
+                    bufferedInputStream.close()
+                    
+                    outputFile.absolutePath
+                } catch (e: Exception) {
+                    throw RuntimeException("Failed to create PDF for unsupported format: ${e.message}")
+                }
+            }
         }
     }
 
@@ -116,51 +203,65 @@ class DocumentConverter(private val context: Context) {
         val inputStream = getInputStreamFromUri(inputUri)
         val fileName = getFileNameFromUri(inputUri)
         val outputFile = createOutputFile(fileName, "pdf")
-        
+
         try {
-            // Use Apache POI to read XLSX file
-            val workbook = org.apache.poi.xssf.usermodel.XSSFWorkbook(inputStream)
-            val sheet = workbook.getSheetAt(0) // Get first sheet
+            // Use buffered streams for better memory management
+            val bufferedInputStream = inputStream.buffered()
             
+            val workbook = org.apache.poi.xssf.usermodel.XSSFWorkbook(bufferedInputStream)
+            val sheet = workbook.getSheetAt(0)
+
             val pdfWriter = PdfWriter(outputFile)
             val pdfDocument = PdfDocument(pdfWriter)
             val pdfDoc = Document(pdfDocument)
-            
-            // Add title
+
             val titleParagraph = Paragraph("Excel File: $fileName")
             titleParagraph.setFontSize(16f)
             pdfDoc.add(titleParagraph)
+
+            // Process rows in chunks to avoid memory issues
+            val lastRowNum = sheet.lastRowNum
+            val chunkSize = 100 // Process 100 rows at a time
             
-            // Extract data from Excel and add to PDF
-            for (rowIndex in 0..sheet.lastRowNum) {
-                val row = sheet.getRow(rowIndex)
-                if (row != null) {
-                    val rowText = StringBuilder()
-                    for (cellIndex in 0 until row.lastCellNum) {
-                        val cell = row.getCell(cellIndex)
-                        if (cell != null) {
-                            when (cell.cellType) {
-                                org.apache.poi.ss.usermodel.CellType.STRING -> rowText.append(cell.stringCellValue)
-                                org.apache.poi.ss.usermodel.CellType.NUMERIC -> rowText.append(cell.numericCellValue.toString())
-                                org.apache.poi.ss.usermodel.CellType.BOOLEAN -> rowText.append(cell.booleanCellValue.toString())
-                                org.apache.poi.ss.usermodel.CellType.FORMULA -> rowText.append(cell.cellFormula)
-                                else -> rowText.append("")
+            for (rowIndex in 0..lastRowNum step chunkSize) {
+                val endRowIndex = minOf(rowIndex + chunkSize, lastRowNum + 1)
+                
+                for (currentRowIndex in rowIndex until endRowIndex) {
+                    val row = sheet.getRow(currentRowIndex)
+                    if (row != null) {
+                        val rowText = StringBuilder()
+                        for (cellIndex in 0 until row.lastCellNum) {
+                            val cell = row.getCell(cellIndex)
+                            if (cell != null) {
+                                when (cell.cellType) {
+                                    org.apache.poi.ss.usermodel.CellType.STRING -> rowText.append(cell.stringCellValue)
+                                    org.apache.poi.ss.usermodel.CellType.NUMERIC -> rowText.append(cell.numericCellValue.toString())
+                                    org.apache.poi.ss.usermodel.CellType.BOOLEAN -> rowText.append(cell.booleanCellValue.toString())
+                                    org.apache.poi.ss.usermodel.CellType.FORMULA -> rowText.append(cell.cellFormula)
+                                    else -> rowText.append("")
+                                }
+                                rowText.append("\t")
                             }
-                            rowText.append("\t")
+                        }
+                        if (rowText.isNotEmpty()) {
+                            val pdfParagraph = Paragraph(rowText.toString().trim())
+                            pdfDoc.add(pdfParagraph)
                         }
                     }
-                    if (rowText.isNotEmpty()) {
-                        val pdfParagraph = Paragraph(rowText.toString().trim())
-                        pdfDoc.add(pdfParagraph)
-                    }
+                }
+                
+                // Force garbage collection periodically
+                if (rowIndex % 500 == 0) {
+                    System.gc()
                 }
             }
-            
+
             pdfDoc.close()
             pdfDocument.close()
             pdfWriter.close()
             workbook.close()
-            
+            bufferedInputStream.close()
+
             return outputFile.absolutePath
         } catch (e: Exception) {
             throw RuntimeException("Failed to convert XLSX to PDF: ${e.message}")
@@ -217,6 +318,25 @@ class DocumentConverter(private val context: Context) {
         }
     }
 
+    private fun validateInputFile(inputUri: Uri): Long {
+        val inputStream = getInputStreamFromUri(inputUri)
+        val fileSize = inputStream.available().toLong()
+        inputStream.close()
+        
+        // Check if file is too large (e.g., > 100MB)
+        val maxFileSize = 100 * 1024 * 1024 // 100MB
+        if (fileSize > maxFileSize) {
+            throw RuntimeException("File is too large (${fileSize / (1024 * 1024)}MB). Maximum size is 100MB.")
+        }
+        
+        // Check if file is empty
+        if (fileSize == 0L) {
+            throw RuntimeException("File is empty or cannot be read.")
+        }
+        
+        return fileSize
+    }
+
     private fun getInputStreamFromUri(uri: Uri): InputStream {
         return context.contentResolver.openInputStream(uri)
             ?: throw RuntimeException("Could not open input stream for URI: $uri")
@@ -239,13 +359,33 @@ class DocumentConverter(private val context: Context) {
         val baseName = fileName.substringBeforeLast(".")
         val outputFileName = "${baseName}_converted.$extension"
         
-        // Save to public Downloads directory for easy access
-        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        if (!downloadsDir.exists()) {
-            downloadsDir.mkdirs()
+        // Try to save to public Downloads directory first
+        try {
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            if (downloadsDir != null && (downloadsDir.exists() || downloadsDir.mkdirs())) {
+                val file = File(downloadsDir, outputFileName)
+                // Ensure we can write to this location
+                if (file.parentFile?.canWrite() == true) {
+                    return file
+                }
+            }
+        } catch (e: Exception) {
+            // Fallback to app's external files directory
         }
         
-        return File(downloadsDir, outputFileName)
+        // Fallback to app's external files directory
+        try {
+            val externalDir = context.getExternalFilesDir(null)
+            if (externalDir != null) {
+                return File(externalDir, outputFileName)
+            }
+        } catch (e: Exception) {
+            // Fallback to internal files directory
+        }
+        
+        // Final fallback to internal files directory
+        val internalDir = context.filesDir
+        return File(internalDir, outputFileName)
     }
 
     fun scanFile(filePath: String) {

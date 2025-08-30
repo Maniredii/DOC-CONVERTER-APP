@@ -58,9 +58,13 @@
     <string name="grant_storage_permission">Grant Permission</string>
     
     <!-- Error Messages -->
-    <string name="file_selection_error">Error selecting file</string>
-    <string name="conversion_error">Conversion failed</string>
-    <string name="file_open_error">Could not open file: %s</string>
+    <string name="file_too_large">File is too large. Maximum size is 100MB.</string>
+    <string name="file_empty">File is empty or cannot be read.</string>
+    <string name="unsupported_format">Unsupported file format: %s</string>
+    <string name="conversion_failed">Conversion failed: %s</string>
+    <string name="storage_error">Storage error: Cannot save file</string>
+    <string name="memory_error">Memory error: File is too large to process</string>
+    <string name="permission_error">Permission error: Cannot access file</string>
     
     <!-- File Picker -->
     <string name="select_file">Select a file to convert</string>
