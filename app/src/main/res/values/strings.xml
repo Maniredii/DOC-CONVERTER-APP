@@ -26,6 +26,11 @@
     <string name="status_error">Error: %s</string>
     <string name="status_file_ready">File ready: %s</string>
     
+    <!-- File Actions -->
+    <string name="view_file">View File</string>
+    <string name="file_converted_successfully">File converted successfully!</string>
+    <string name="converted_file_path">File saved to: %s</string>
+    
     <!-- Progress -->
     <string name="progress_percentage">%d%%</string>
     

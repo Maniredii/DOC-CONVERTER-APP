@@ -92,7 +92,63 @@ class DocumentConverter(private val context: Context) {
             "docx" -> convertDocxToPdf(inputUri)
             "txt" -> convertTextToPdf(inputUri)
             "rtf" -> convertRtfToPdf(inputUri)
+            "xlsx" -> convertXlsxToPdf(inputUri)
             else -> throw RuntimeException("Unsupported file format: $fileExtension")
+        }
+    }
+
+    private fun convertXlsxToPdf(inputUri: Uri): String {
+        val inputStream = getInputStreamFromUri(inputUri)
+        val fileName = getFileNameFromUri(inputUri)
+        val outputFile = createOutputFile(fileName, "pdf")
+        
+        try {
+            // Use Apache POI to read XLSX file
+            val workbook = org.apache.poi.xssf.usermodel.XSSFWorkbook(inputStream)
+            val sheet = workbook.getSheetAt(0) // Get first sheet
+            
+            val pdfWriter = PdfWriter(outputFile)
+            val pdfDocument = PdfDocument(pdfWriter)
+            val pdfDoc = Document(pdfDocument)
+            
+            // Add title
+            val titleParagraph = Paragraph("Excel File: $fileName")
+            titleParagraph.setFontSize(16f)
+            pdfDoc.add(titleParagraph)
+            
+            // Extract data from Excel and add to PDF
+            for (rowIndex in 0..sheet.lastRowNum) {
+                val row = sheet.getRow(rowIndex)
+                if (row != null) {
+                    val rowText = StringBuilder()
+                    for (cellIndex in 0 until row.lastCellNum) {
+                        val cell = row.getCell(cellIndex)
+                        if (cell != null) {
+                            when (cell.cellType) {
+                                org.apache.poi.ss.usermodel.CellType.STRING -> rowText.append(cell.stringCellValue)
+                                org.apache.poi.ss.usermodel.CellType.NUMERIC -> rowText.append(cell.numericCellValue.toString())
+                                org.apache.poi.ss.usermodel.CellType.BOOLEAN -> rowText.append(cell.booleanCellValue.toString())
+                                org.apache.poi.ss.usermodel.CellType.FORMULA -> rowText.append(cell.cellFormula)
+                                else -> rowText.append("")
+                            }
+                            rowText.append("\t")
+                        }
+                    }
+                    if (rowText.isNotEmpty()) {
+                        val pdfParagraph = Paragraph(rowText.toString().trim())
+                        pdfDoc.add(pdfParagraph)
+                    }
+                }
+            }
+            
+            pdfDoc.close()
+            pdfDocument.close()
+            pdfWriter.close()
+            workbook.close()
+            
+            return outputFile.absolutePath
+        } catch (e: Exception) {
+            throw RuntimeException("Failed to convert XLSX to PDF: ${e.message}")
         }
     }
 

@@ -46,6 +46,13 @@ class ConversionActivity : AppCompatActivity() {
             viewModel.cancelConversion()
             finish()
         }
+        
+        binding.btnViewFile.setOnClickListener {
+            // Get the current output path from the ViewModel
+            viewModel.getCurrentOutputPath()?.let { outputPath ->
+                openConvertedFile(outputPath)
+            }
+        }
     }
     
     private fun handleIntent() {
@@ -77,24 +84,29 @@ class ConversionActivity : AppCompatActivity() {
                     binding.tvStatus.text = getString(R.string.status_idle)
                     binding.btnStartConversion.isEnabled = true
                     binding.btnCancel.isEnabled = false
+                    binding.btnViewFile.visibility = android.view.View.GONE
                 }
                 is ConversionStatus.Loading -> {
                     binding.tvStatus.text = getString(R.string.status_converting)
                     binding.btnStartConversion.isEnabled = false
                     binding.btnCancel.isEnabled = true
+                    binding.btnViewFile.visibility = android.view.View.GONE
                 }
                 is ConversionStatus.Success -> {
-                    binding.tvStatus.text = getString(R.string.status_success)
+                    binding.tvStatus.text = getString(R.string.file_converted_successfully)
                     binding.btnStartConversion.isEnabled = false
                     binding.btnCancel.isEnabled = false
+                    binding.btnViewFile.visibility = android.view.View.VISIBLE
                     
-                    // Open the converted file
-                    openConvertedFile(status.outputPath)
+                    // Show additional info about the converted file
+                    val fileName = status.outputPath.substringAfterLast("/").substringAfterLast("\\")
+                    binding.tvStatus.text = getString(R.string.converted_file_path, fileName)
                 }
                 is ConversionStatus.Error -> {
                     binding.tvStatus.text = getString(R.string.status_error, status.message)
                     binding.btnStartConversion.isEnabled = true
                     binding.btnCancel.isEnabled = false
+                    binding.btnViewFile.visibility = android.view.View.GONE
                 }
             }
         }
@@ -123,6 +135,7 @@ class ConversionActivity : AppCompatActivity() {
             filePath.endsWith(".pdf") -> "application/pdf"
             filePath.endsWith(".docx") -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             filePath.endsWith(".txt") -> "text/plain"
+            filePath.endsWith(".xlsx") -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             else -> "*/*"
         }
     }

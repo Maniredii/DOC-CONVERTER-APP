@@ -24,6 +24,7 @@ class ConversionViewModel : ViewModel() {
     private var conversionType: ConversionType? = null
     private var conversionJob: Job? = null
     private var documentConverter: DocumentConverter? = null
+    private var currentOutputPath: String? = null
     
     fun setInputFile(uri: Uri) {
         inputFile = uri
@@ -37,6 +38,10 @@ class ConversionViewModel : ViewModel() {
         documentConverter = DocumentConverter(context)
     }
     
+    fun getCurrentOutputPath(): String? {
+        return currentOutputPath
+    }
+    
     fun startConversion() {
         if (inputFile == null || conversionType == null || documentConverter == null) {
             _conversionStatus.value = ConversionStatus.Error("Missing input file, conversion type, or context")
@@ -48,12 +53,14 @@ class ConversionViewModel : ViewModel() {
             try {
                 _conversionStatus.value = ConversionStatus.Loading
                 _conversionProgress.value = 0
+                currentOutputPath = null // Reset output path
                 
                 // Simulate progress
                 simulateProgress()
                 
                 // Perform conversion
                 val outputPath = documentConverter!!.convert(inputFile!!, conversionType!!)
+                currentOutputPath = outputPath
                 
                 _conversionProgress.value = 100
                 _conversionStatus.value = ConversionStatus.Success(outputPath)

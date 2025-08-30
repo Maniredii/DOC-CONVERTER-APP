@@ -176,7 +176,22 @@
                         android:text="Ready to convert"
                         android:textSize="16sp"
                         android:textColor="@color/secondary_text_color"
-                        android:gravity="center" />
+                        android:gravity="center"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- View File Button (initially hidden) -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnViewFile"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/view_file"
+                        android:textSize="16sp"
+                        app:cornerRadius="24dp"
+                        android:textAllCaps="false"
+                        android:visibility="gone"
+                        android:layout_gravity="center"
+                        android:drawableStart="@drawable/ic_file"
+                        android:drawablePadding="8dp" />
 
                 </LinearLayout>
 
