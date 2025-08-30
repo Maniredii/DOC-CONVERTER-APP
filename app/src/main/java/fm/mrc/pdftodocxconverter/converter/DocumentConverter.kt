@@ -17,6 +17,14 @@ import com.itextpdf.kernel.font.PdfFontFactory
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import android.os.Environment
+import android.media.MediaScannerConnection
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Intent
+import android.os.Build
+import androidx.core.app.NotificationCompat
 
 class DocumentConverter(private val context: Context) {
 
@@ -25,6 +33,13 @@ class DocumentConverter(private val context: Context) {
             ConversionType.PDF_TO_DOCX -> convertPdfToDocx(inputUri)
             ConversionType.DOCX_TO_PDF -> convertDocxToPdf(inputUri)
             ConversionType.ANY_TO_PDF -> convertAnyToPdf(inputUri)
+        }.also { outputPath ->
+            // Scan the file so it appears in Downloads app
+            scanFile(outputPath)
+            
+            // Show notification
+            val fileName = File(outputPath).name
+            showFileSavedNotification(fileName, outputPath)
         }
     }
 
@@ -220,9 +235,69 @@ class DocumentConverter(private val context: Context) {
         }
     }
 
-    private fun createOutputFile(inputFileName: String, outputExtension: String): File {
-        val baseName = inputFileName.substringBeforeLast(".")
-        val outputDir = context.getExternalFilesDir(null) ?: context.filesDir
-        return File(outputDir, "${baseName}_converted.$outputExtension")
+    private fun createOutputFile(fileName: String, extension: String): File {
+        val baseName = fileName.substringBeforeLast(".")
+        val outputFileName = "${baseName}_converted.$extension"
+        
+        // Save to public Downloads directory for easy access
+        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        if (!downloadsDir.exists()) {
+            downloadsDir.mkdirs()
+        }
+        
+        return File(downloadsDir, outputFileName)
+    }
+
+    fun scanFile(filePath: String) {
+        MediaScannerConnection.scanFile(context, arrayOf(filePath), null, null)
+    }
+    
+    private fun showFileSavedNotification(fileName: String, filePath: String) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
+        // Create notification channel for Android 8+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                "file_conversion",
+                "File Conversion",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Notifications for file conversion status"
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+        
+        // Create intent to open the file
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(Uri.fromFile(File(filePath)), getMimeType(filePath))
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        val notification = NotificationCompat.Builder(context, "file_conversion")
+            .setContentTitle("File Converted Successfully!")
+            .setContentText("$fileName saved to Downloads")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+        
+        notificationManager.notify(1, notification)
+    }
+    
+    private fun getMimeType(filePath: String): String {
+        return when {
+            filePath.endsWith(".pdf") -> "application/pdf"
+            filePath.endsWith(".docx") -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            filePath.endsWith(".txt") -> "text/plain"
+            filePath.endsWith(".xlsx") -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            else -> "*/*"
+        }
     }
 }
