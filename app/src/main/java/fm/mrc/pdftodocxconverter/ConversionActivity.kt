@@ -35,7 +35,7 @@ class ConversionActivity : AppCompatActivity() {
         supportActionBar?.setDisplayShowTitleEnabled(false)
         
         binding.toolbar.setNavigationOnClickListener {
-            onBackPressed()
+            finish()
         }
         
         binding.btnStartConversion.setOnClickListener {
