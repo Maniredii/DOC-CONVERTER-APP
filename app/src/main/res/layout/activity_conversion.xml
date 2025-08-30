@@ -52,14 +52,14 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/file_information"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary_text_color"
-                        android:layout_marginBottom="16dp" />
+                                            <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/file_name"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/primary_text_color"
+                            android:layout_marginBottom="16dp" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -70,7 +70,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/file_label"
+                            android:text="@string/file_name"
                             android:textSize="16sp"
                             android:textColor="@color/secondary_text_color"
                             android:layout_marginEnd="8dp" />
@@ -95,7 +95,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/conversion_label"
+                            android:text="@string/conversion_type"
                             android:textSize="16sp"
                             android:textColor="@color/secondary_text_color"
                             android:layout_marginEnd="8dp" />
@@ -190,12 +190,12 @@
                 android:gravity="center">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnConvert"
+                    android:id="@+id/btnStartConversion"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
-                                            android:text="@string/start_conversion"
+                    android:text="@string/start_conversion"
                     android:textSize="16sp"
                     app:cornerRadius="24dp"
                     android:textAllCaps="false" />

@@ -1,18 +1,16 @@
 package fm.mrc.pdftodocxconverter.viewmodel
 
-import android.content.Context
-import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import fm.mrc.pdftodocxconverter.ConversionStatus
-import fm.mrc.pdftodocxconverter.converter.DocumentConverter
 import fm.mrc.pdftodocxconverter.converter.ConversionType
+import fm.mrc.pdftodocxconverter.converter.DocumentConverter
+import android.content.Context
+import android.net.Uri
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
 
 class ConversionViewModel : ViewModel() {
     
@@ -22,48 +20,46 @@ class ConversionViewModel : ViewModel() {
     private val _conversionProgress = MutableLiveData<Int>(0)
     val conversionProgress: LiveData<Int> = _conversionProgress
     
-    private var inputFileUri: Uri? = null
-    private var conversionType: ConversionType = ConversionType.PDF_TO_DOCX
+    private var inputFile: Uri? = null
+    private var conversionType: ConversionType? = null
     private var conversionJob: Job? = null
+    private var documentConverter: DocumentConverter? = null
     
     fun setInputFile(uri: Uri) {
-        inputFileUri = uri
-        _conversionStatus.value = ConversionStatus.Idle
-        _conversionProgress.value = 0
+        inputFile = uri
     }
     
     fun setConversionType(type: ConversionType) {
         conversionType = type
     }
     
+    fun setContext(context: Context) {
+        documentConverter = DocumentConverter(context)
+    }
+    
     fun startConversion() {
-        val uri = inputFileUri ?: run {
-            _conversionStatus.value = ConversionStatus.Error("No input file selected")
+        if (inputFile == null || conversionType == null || documentConverter == null) {
+            _conversionStatus.value = ConversionStatus.Error("Missing input file, conversion type, or context")
             return
         }
         
-        if (conversionJob?.isActive == true) {
-            return
-        }
-        
-        _conversionStatus.value = ConversionStatus.Loading
-        _conversionProgress.value = 0
-        
+        conversionJob?.cancel()
         conversionJob = viewModelScope.launch {
             try {
-                // Simulate conversion progress
+                _conversionStatus.value = ConversionStatus.Loading
+                _conversionProgress.value = 0
+                
+                // Simulate progress
                 simulateProgress()
                 
-                // Perform actual conversion
-                val converter = DocumentConverter()
-                val outputUri = converter.convert(uri, conversionType)
+                // Perform conversion
+                val outputPath = documentConverter!!.convert(inputFile!!, conversionType!!)
                 
-                _conversionStatus.value = ConversionStatus.Success(outputUri)
                 _conversionProgress.value = 100
+                _conversionStatus.value = ConversionStatus.Success(outputPath)
                 
             } catch (e: Exception) {
                 _conversionStatus.value = ConversionStatus.Error(e.message ?: "Unknown error occurred")
-                _conversionProgress.value = 0
             }
         }
     }
@@ -76,17 +72,15 @@ class ConversionViewModel : ViewModel() {
     
     private suspend fun simulateProgress() {
         for (i in 0..100 step 5) {
-            if (conversionJob?.isActive == true) {
-                _conversionProgress.value = i
-                delay(100) // Simulate processing time
-            } else {
-                break
-            }
+            delay(100)
+            _conversionProgress.value = i
         }
     }
-    
-    override fun onCleared() {
-        super.onCleared()
-        conversionJob?.cancel()
-    }
+}
+
+sealed class ConversionStatus {
+    object Idle : ConversionStatus()
+    object Loading : ConversionStatus()
+    data class Success(val outputPath: String) : ConversionStatus()
+    data class Error(val message: String) : ConversionStatus()
 }

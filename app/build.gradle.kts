@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "fm.mrc.pdftodocxconverter"
-        minSdk = 22
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -42,28 +42,28 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    
+
     // Room Database
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    
+
     // Lifecycle Components
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
-    
+
     // Coroutines
     implementation(libs.androidx.coroutines.android)
-    
+
     // PDF Processing
-    implementation(libs.pdfbox.android)
-    
+    implementation(libs.itext7.core)
+
     // Office Document Processing
     implementation(libs.apache.poi)
     implementation(libs.apache.poi.ooxml)
-    
+
     // File Handling
     implementation(libs.androidx.documentfile)
-    
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

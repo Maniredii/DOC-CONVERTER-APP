@@ -1,54 +1,61 @@
 <resources>
     <string name="app_name">PDF Converter Pro</string>
-    
-    <!-- Main Activity -->
     <string name="app_title">PDF Converter Pro</string>
-    <string name="app_subtitle">Convert documents between PDF, DOCX, and more</string>
+    <string name="app_subtitle">Convert documents between formats easily</string>
     
     <!-- Conversion Types -->
+    <string name="convert">Convert</string>
     <string name="pdf_to_docx">PDF to DOCX</string>
-    <string name="pdf_to_docx_description">Convert PDF files to editable Word documents</string>
+    <string name="pdf_to_docx_desc">Convert PDF documents to Word format</string>
     <string name="docx_to_pdf">DOCX to PDF</string>
-    <string name="docx_to_pdf_description">Convert Word documents to PDF format</string>
+    <string name="docx_to_pdf_desc">Convert Word documents to PDF format</string>
     <string name="any_to_pdf">Any to PDF</string>
-    <string name="any_to_pdf_description">Convert various formats to PDF</string>
+    <string name="any_to_pdf_desc">Convert various formats to PDF</string>
     
     <!-- Buttons -->
-    <string name="convert">Convert</string>
     <string name="start_conversion">Start Conversion</string>
     <string name="cancel">Cancel</string>
     <string name="open_file">Open File</string>
-    <string name="try_again">Try Again</string>
     <string name="recent">Recent</string>
     <string name="settings">Settings</string>
     
     <!-- Status Messages -->
-    <string name="ready_to_convert">Ready to convert</string>
-    <string name="converting">Converting…</string>
-    <string name="conversion_completed">Conversion completed successfully!</string>
-    <string name="conversion_error">Error occurred during conversion</string>
+    <string name="status_idle">Ready to convert</string>
+    <string name="status_converting">Converting…</string>
+    <string name="status_success">Conversion completed successfully!</string>
+    <string name="status_error">Error: %s</string>
+    <string name="status_file_ready">File ready: %s</string>
+    
+    <!-- Progress -->
+    <string name="progress_percentage">%d%%</string>
     
     <!-- File Information -->
-    <string name="file_information">File Information</string>
-    <string name="file_label">File:</string>
-    <string name="conversion_label">Conversion:</string>
+    <string name="file_name">File Name</string>
+    <string name="conversion_type">Conversion Type</string>
     <string name="conversion_progress">Conversion Progress</string>
     
-    <!-- Permissions -->
+    <!-- Permission Dialogs -->
+    <string name="permission_rationale_title">Storage Permission Required</string>
+    <string name="permission_rationale_message">This app needs access to your storage to convert documents. Please grant the permission to continue.</string>
+    <string name="permission_denied_title">Permission Denied</string>
+    <string name="permission_denied_message">Storage permission is required for this app to function. Please enable it in Settings.</string>
     <string name="permission_required">Permission Required</string>
     <string name="permission_message">This app needs access to your files to convert documents. Please grant the permission.</string>
     <string name="permission_denied">Permission Denied</string>
-    <string name="permission_denied_message">File access permission is required for this app to work. Please enable it in settings.</string>
     <string name="grant_permission">Grant Permission</string>
     <string name="open_settings">Open Settings</string>
+    <string name="cancel_permission">Cancel</string>
     
     <!-- Error Messages -->
-    <string name="no_file_selected">No input file selected</string>
-    <string name="unsupported_format">Unsupported file format</string>
-    <string name="conversion_failed">Conversion failed</string>
-    <string name="file_open_error">Could not open file</string>
+    <string name="file_selection_error">Error selecting file</string>
+    <string name="conversion_error">Conversion failed</string>
+    <string name="file_open_error">Could not open file: %s</string>
     
-    <!-- Features -->
+    <!-- File Picker -->
+    <string name="select_file">Select a file to convert</string>
+    <string name="file_selected">File selected: %s</string>
+    
+    <!-- Coming Soon Messages -->
     <string name="recent_conversions_coming_soon">Recent conversions feature coming soon!</string>
     <string name="settings_coming_soon">Settings feature coming soon!</string>
 </resources>
